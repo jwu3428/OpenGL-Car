@@ -27,7 +27,7 @@ vector<vec3> normals;
 
 void update()
 {
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
 	
 	glutSwapBuffers();
 }
@@ -39,6 +39,8 @@ void init()
 
 int main(int argc, char **argv)
 {
+	init();
+	
 	glutInit(&argc, argv);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("P5");
