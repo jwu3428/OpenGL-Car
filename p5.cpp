@@ -17,15 +17,26 @@ typedef struct RGB {
 	RGB(GLfloat _r = 0.0f, GLfloat _g = 0.0f, GLfloat _b = 0.0f) : r(_r), g(_g), b(_b) {}
 } RGB;
 
-GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat shininess[] = { 50.0 };
+void arrow_key_callback(int key, int x, int y);
+void kb_callback(unsigned char key, int x, int y);
+
+//GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+//GLfloat shininess[] = { 50.0 };
 GLfloat ambientLight[] = { 0.6f, 0.6f, 0.6f, 1.0f };
 GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 GLfloat position[] = { 1.0f, 1.0f, 1.0f, 0.0f };
 
-GLUquadricObj *hexNut = gluNewQuadric();
 //gluQuadricNormals(hexNut, GL_TRUE);
+
+GLfloat WorldXAngle = 0.0f;
+GLfloat WorldYAngle = 0.0f;
+GLfloat TireRotateAngle = 0.0f;
+GLfloat CameraZ = -5.0f;
+
+GLuint hexNut;
+GLuint tire;
+GLuint triangle;
 
 void reshape(int w, int h)
 {
@@ -43,55 +54,127 @@ void reshape(int w, int h)
 }
 
 void drawHexNut()
-{
-	/*
-	glNewList(cyl, GL_COMPILE);
-		GLUquadric *nut = gluNewQuadric();
-		gluQuadricDrawStyle(nut, GLU_FILL);
-		glColor3f(1, 0, 0);
-		gluCylinder(nut, 1.0, 1.0, 0.3, 6, 2);
+{	
+	hexNut = glGenLists(1);
+	glNewList(hexNut, GL_COMPILE);
+		GLUquadricObj *quad = gluNewQuadric();
+		gluQuadricDrawStyle(quad, GLU_FILL);
+		glColor3f(0.5, 0.5, 0.5);
+		gluCylinder(quad, 0.25, 0.25, 0.1, 6, 2);
+		
+		glPushMatrix();
+		glTranslatef(0.0, 0.0, 0.1);
+		gluDisk(quad, 0.0, 0.25, 6, 2);
+		glPopMatrix();
+		
+		glPushMatrix();
+		glRotatef(180.0, 0.1, 0, 0);
+		gluDisk(quad, 0.0, 0.25, 6, 2);
+		glPopMatrix();
 	glEndList();
-	*/
-	gluQuadricDrawStyle(hexNut, GLU_FILL);
-	glColor3f(0.5, 0.5, 0.5);
-	gluCylinder(hexNut, 1.0, 1.0, 0.4, 6, 2);
-	
-	glPushMatrix();
-	glTranslatef(0.0, 0.0, 0.4);
-	gluDisk(hexNut, 0.0, 1.0, 6, 2);
-	glPopMatrix();
-	
-	glPushMatrix();
-	glRotatef(180.0, 1.0, 0, 0);
-	gluDisk(hexNut, 0.0, 1.0, 6, 2);
-	glPopMatrix();
 }
 
 void drawTire()
 {
 	
+	tire = glGenLists(1);
+	glNewList(tire, GL_COMPILE);
+		for(int i = 0; i < 5; i++) {
+			
+			GLfloat materialClr[] = {0.5, 0.5, 0.5, 1};
+			GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat shininess[] = { 50.0 };
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, materialClr);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpec);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+			
+			glPushMatrix();
+				glTranslatef(0.0, 0.0, 0.3);
+				glRotatef(72.0*i, 0.0, 0.0, 1.0);
+				glTranslatef(1.0, 0.0, 0.0);
+				glCallList(hexNut);
+			glPopMatrix();
+		}
+		
+		GLfloat materialClr[] = {1, 0.1, 0.1, 1};
+		GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat shininess[] = { 20.0 };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, materialClr);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpec);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+		
+		glutSolidTorus(1.2, 2.4, 20, 20);
+	glEndList();
+}
+
+
+void kb_callback(unsigned char key, int x, int y)
+{
+	switch(key) {
+		case 'r':
+			TireRotateAngle += 1.0f;
+			break;
+		case 'z':
+			CameraZ -= 1.0f;
+			break;
+		case 'x':
+			CameraZ += 1.0f;
+			break;
+	}
+	glutPostRedisplay();
+}
+
+void arrow_key_callback(int key, int x, int y)
+{
+	switch(key) {
+		case GLUT_KEY_LEFT:
+			WorldXAngle -= 5.0f;
+			break;
+		case GLUT_KEY_RIGHT:
+			WorldXAngle += 5.0f;
+			break;
+		case GLUT_KEY_UP:
+			WorldYAngle -= 5.0f;
+			break;
+		case GLUT_KEY_DOWN:
+			WorldYAngle += 5.0f;
+			break;
+	}
+	glutPostRedisplay();
 }
 
 void update()
 {
 	//int time = glutGet(GLUT_ELAPSED_TIME);
-	int time = 1;
+	//int time = TireRotateAngle;
 	
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Rotate the image
 	glMatrixMode(GL_MODELVIEW); // Current matrix affects objects positions
 	glLoadIdentity(); // Initialize to the identity
-	glTranslatef(0, 0.0, -5.0); // Translate from origin (in front of viewer)
-	glRotatef(0.0, 0.0, 1.0, 0.0); // Rotate around y-axis
-	glRotatef(-20, 1.0, 0.0, 0.0); // Set Azimuth angle
+	glTranslatef(-2, -2, CameraZ-5); // Translate from origin (in front of viewer)
+	glRotatef(WorldXAngle, 0.0, 1.0, 0.0);
+	glRotatef(WorldYAngle, 1.0, 0.0, 0.0);
 
 	glDisable(GL_CULL_FACE);
-	glPushMatrix();
-	glRotatef(time * 1.0, 0.0, 0.0, 1.0);
-	glTranslatef(1.5, 0.0, 0.0);
-	drawHexNut();
-	glPopMatrix();
+	//glPushMatrix();
+		for(int i = 0; i < 2; i++) {
+			glPushMatrix();
+				glTranslatef(10.0 * i, 0, 0);
+				glRotatef(TireRotateAngle, 0.0, 0.0, 1.0);
+				glCallList(tire);
+			glPopMatrix();
+		}
+		for(int i = 0; i < 2; i++) {
+			glPushMatrix();
+				glTranslatef(10.0 * i, 0, -8.0);
+				glRotatef(180.0, 1.0, 0, 0);
+				glRotatef(-TireRotateAngle, 0.0, 0.0, 1.0);
+				glCallList(tire);
+			glPopMatrix();
+		}
+	//glPopMatrix();
 	
 	glutSwapBuffers();
 	//glutPostRedisplay();
@@ -99,15 +182,25 @@ void update()
 
 void init()
 {
+	glClearColor(0,0,0,0);
+	glColor3f(1,1,1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
 	glLightfv(GL_LIGHT0, GL_POSITION, position);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpec);
-	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 	
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	
+	
+	glutSpecialFunc(arrow_key_callback);
+	glutKeyboardFunc(kb_callback);
+	
+	drawHexNut();
+	drawTire();
 }
 
 int main(int argc, char **argv)
@@ -119,10 +212,6 @@ int main(int argc, char **argv)
 	init();
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(update);
-	glClearColor(0,0,0,0);
-	glColor3f(1,1,1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();
 	
 	return 0;
