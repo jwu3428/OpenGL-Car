@@ -30,17 +30,17 @@ GLfloat WorldXAngle = 0.0f;
 GLfloat WorldYAngle = 0.0f;
 GLfloat TireRotateSpeed = 1.0f;
 GLfloat CameraZ = -5.0f;
+GLfloat CarPos[] = {0.0f, 0.0f, 0.0f};
+GLfloat CarRotation = 0.0f;
 
-GLuint hexNut;
-GLuint tire;
-GLuint triangle;
-GLuint carFront;
+GLuint hexNut, tire, tireCap, carFront, axle;
 
 int Time;
 bool accel = false;
 float accelRate = 0.0f;
 bool backaccel = false;
 bool cruisectrl = false;
+bool turnRight = false, turnLeft = false;
 
 void reshape(int w, int h)
 {
@@ -57,14 +57,39 @@ void reshape(int w, int h)
 	glLoadIdentity();
 }
 
+void setMaterial(GLfloat r, GLfloat g, GLfloat b, GLfloat shine)
+{
+	GLfloat materialClr[] = {r, g, b, 1};
+	GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat shininess[] = { shine };
+	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, materialClr);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpec);
+	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+}
+
 void drawCarFront()
 {
 	carFront = glGenLists(1);
 	glNewList(carFront, GL_COMPILE);
 		glBegin(GL_POLYGON);
-			glVertex3f(0,0,0.3f);
-			glVertex3f(0,0,0.7f);
+			glVertex3f(-0.4f,0,-0.2f);
+			glVertex3f(-0.4f,0,0.2f);
+			glVertex3f(0, 0, 0.5f);
+			glVertex3f(0, 0.2f, 0.2f);
+			glVertex3f(0, 0.2f, -0.2f);
+			glVertex3f(0, 0, -0.5f);
+		glEnd();
 	glEndList();
+}
+
+void drawAxle()
+{
+	axle = glGenLists(1);
+	glNewList(axle, GL_COMPILE);
+		GLUquadricObj *cyl = gluNewQuadric();
+		gluQuadricDrawStyle(cyl, GLU_FILL);
+		gluCylinder(cyl, 0.1, 0.1, 4.0, 10, 10);
+	glEndList(); 
 }
 
 void drawHexNut()
@@ -83,8 +108,29 @@ void drawHexNut()
 		glPopMatrix();
 		
 		glPushMatrix();
-		glRotatef(180.0, 0.1, 0, 0);
+		glRotatef(180.0, 1.0, 0, 0);
 		gluDisk(quad, 0.0, 0.25, 6, 2);
+		glPopMatrix();
+	glEndList();
+}
+
+void drawTireCap()
+{
+	GLfloat h = 0.2f, r = 1.5f;
+	tireCap = glGenLists(1);
+	glNewList(tireCap, GL_COMPILE);
+		GLUquadricObj *cap = gluNewQuadric();
+		gluQuadricDrawStyle(cap, GLU_FILL);
+		gluCylinder(cap, r, r, h, 20, 10);
+		
+		glPushMatrix();
+			glTranslatef(0.0, 0.0, h);
+			gluDisk(cap, 0.0, r, 20, 10);
+		glPopMatrix();
+		
+		glPushMatrix();
+			glRotatef(180.0, 1.0, 0, 0);
+			gluDisk(cap, 0.0, r, 20, 10);
 		glPopMatrix();
 	glEndList();
 }
@@ -111,6 +157,12 @@ void drawTire()
 			glPopMatrix();
 		}
 		
+		setMaterial(0.8, 0.8, 0, 50);
+		glPushMatrix();
+			cout << tireCap<< endl;
+			glCallList(tireCap);
+		glPopMatrix();
+		
 		GLfloat materialClr[] = {0.1, 0.1, 0.1, 1};
 		GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 		GLfloat shininess[] = { 20.0 };
@@ -118,7 +170,8 @@ void drawTire()
 		glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpec);
 		glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 		
-		glutSolidTorus(1.2, 2.4, 20, 20);
+		glutSolidTorus(0.75, 2.0, 20, 20);
+		
 	glEndList();
 }
 
@@ -134,6 +187,12 @@ void kb_callback(unsigned char key, int x, int y)
 		case 's':
 			cruisectrl = false;
 			backaccel = true;
+			break;
+		case 'a':
+			turnLeft = true;
+			break;
+		case 'd':
+			turnRight = true;
 			break;
 		case 'f':
 			cruisectrl = !cruisectrl;
@@ -162,6 +221,12 @@ void kb_up_callback(unsigned char key, int x, int y)
 			break;
 		case 's':
 			backaccel = false;
+			break;
+		case 'a':
+			turnLeft = false;
+			break;
+		case 'd':
+			turnRight = false;
 			break;
 	}
 	//glutPostRedisplay();
@@ -197,28 +262,73 @@ void update()
 	// Rotate the image
 	glMatrixMode(GL_MODELVIEW); // Current matrix affects objects positions
 	glLoadIdentity(); // Initialize to the identity
-	glTranslatef(-5.0f, 0.0f, CameraZ-5.0f); // Translate from origin (in front of viewer)
+	glTranslatef(0.0f, 0.0f, CameraZ-5.0f);
 	glRotatef(WorldXAngle, 0.0, 1.0, 0.0);
 	glRotatef(WorldYAngle, 1.0, 0.0, 0.0);
 
 	glDisable(GL_CULL_FACE);
+	
 	glPushMatrix();
-	glColor3f(1,1,1);
-		for(int i = 0; i < 2; i++) {
-			glPushMatrix();
-				glTranslatef(10.0 * i, 0, 0);
-				glRotatef(TireRotateSpeed, 0.0, 0.0, 1.0);
-				glCallList(tire);
-			glPopMatrix();
-		}
-		for(int i = 0; i < 2; i++) {
-			glPushMatrix();
-				glTranslatef(10.0 * i, 0, -8.0);
-				glRotatef(180.0, 1.0, 0, 0);
-				glRotatef(-TireRotateSpeed, 0.0, 0.0, 1.0);
-				glCallList(tire);
-			glPopMatrix();
-		}
+		glutSolidSphere(0.1, 20, 20);
+	glPopMatrix();
+	
+	glPushMatrix();
+		glTranslatef(CarPos[0]-4.0, CarPos[1], CarPos[2]);
+		glRotatef(CarRotation, 0, 1, 0);
+		glPushMatrix();
+			glTranslatef(-2.5, 0, 2.0);
+			glRotatef(TireRotateSpeed, 0.0, 0.0, 1.0);
+			glScalef(0.3, 0.3, 0.3);
+			glCallList(tire);
+		glPopMatrix();
+	
+		glPushMatrix();
+			glTranslatef(2.5, 0, 2.0);
+			glRotatef(TireRotateSpeed, 0.0, 0.0, 1.0);
+			glScalef(0.3, 0.3, 0.3);
+			glCallList(tire);
+		glPopMatrix();
+	
+		glPushMatrix();
+			glTranslatef(-2.5, 0, -2.0);
+			glRotatef(180.0, 1.0, 0, 0);
+			glRotatef(-TireRotateSpeed, 0.0, 0.0, 1.0);
+			glScalef(0.3, 0.3, 0.3);
+			glCallList(tire);
+		glPopMatrix();
+	
+		glPushMatrix();
+			glTranslatef(2.5, 0, -2.0);
+			glRotatef(180.0, 1.0, 0, 0);
+			glRotatef(-TireRotateSpeed, 0.0, 0.0, 1.0);
+			glScalef(0.3, 0.3, 0.3);
+			glCallList(tire);
+		glPopMatrix();
+	
+		glPushMatrix();
+			setMaterial(0.5, 0.5, 0.5, 50.0);
+			glTranslatef(-2.5,0,-2.0);
+			glCallList(axle);
+		glPopMatrix();
+	
+		glPushMatrix();
+			glTranslatef(2.5,0,-2.0);
+			glCallList(axle);
+		glPopMatrix();
+	
+		glPushMatrix();
+			glScalef(1.2, 1.0, 1.0);
+			glRotatef(90.0, 0.0, 1.0, 0.0);
+			glTranslatef(0.0, 0.0, -2.0);
+			glCallList(axle);
+		glPopMatrix();
+	
+		glPushMatrix();
+			setMaterial(1,1,1,20);
+			glTranslatef(-4.0, 0.0, 0.0);
+			glScalef(4.0, 4.0, 4.0);
+			glCallList(carFront);
+		glPopMatrix();
 	glPopMatrix();
 	
 	if(!cruisectrl) {
@@ -234,7 +344,18 @@ void update()
 		}
 	}
 	
+	if(turnRight) {
+		CarRotation -= accelRate/10;
+	} else if(turnLeft) {
+		CarRotation += accelRate/10;
+	}
+		
+	
 	TireRotateSpeed = TireRotateSpeed + accelRate;
+	//CarPos[0] -= accelRate/100;
+	CarPos[0] -= cos(CarRotation / 180.0 * M_PI) * accelRate/100;
+	CarPos[2] += sin(CarRotation / 180.0 * M_PI) * accelRate/100;
+	cout << CarPos[0] << ' ' << CarPos[1]  << ' ' << CarPos[2] << endl;
 	
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -246,6 +367,7 @@ void init()
 	glColor3f(1,1,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_NORMALIZE);
 	
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
@@ -261,7 +383,10 @@ void init()
 	glutKeyboardUpFunc(kb_up_callback);
 	
 	drawHexNut();
+	drawTireCap();
 	drawTire();
+	drawCarFront();
+	drawAxle();
 }
 
 int main(int argc, char **argv)
