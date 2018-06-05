@@ -38,10 +38,13 @@ GLfloat CameraZ = -5.0f;
 GLuint hexNut;
 GLuint tire;
 GLuint triangle;
+GLuint carFront;
 
 int Time;
 bool accel = false;
-float accelRate = 1.0f;
+float accelRate = 0.0f;
+bool backaccel = false;
+bool cruisectrl = false;
 
 void reshape(int w, int h)
 {
@@ -56,6 +59,11 @@ void reshape(int w, int h)
 	*/ 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+}
+
+void drawCarFront()
+{
+	carFront = glGenLists(1);
 }
 
 void drawHexNut()
@@ -117,9 +125,17 @@ void drawTire()
 void kb_callback(unsigned char key, int x, int y)
 {
 	switch(key) {
-		case 'a':
-			cout << "Accelerating..." << endl;
+		case 'w':
+			//cout << "Accelerating..." << endl;
+			cruisectrl = false;
 			accel = true;
+			break;
+		case 's':
+			cruisectrl = false;
+			backaccel = true;
+			break;
+		case 'f':
+			cruisectrl = !cruisectrl;
 			break;
 		case 'r':
 			TireRotateSpeed += 0.1f;
@@ -139,9 +155,12 @@ void kb_callback(unsigned char key, int x, int y)
 void kb_up_callback(unsigned char key, int x, int y)
 {
 	switch(key) {
-		case 'a':
-			cout << "Decelerating..." << endl;
+		case 'w':
+			//cout << "Decelerating..." << endl;
 			accel = false;
+			break;
+		case 's':
+			backaccel = false;
 			break;
 	}
 	//glutPostRedisplay();
@@ -201,14 +220,20 @@ void update()
 		}
 	glPopMatrix();
 	
-	if(accel) {
-		accelRate = min(2.0f, accelRate + 0.01f);
-		TireRotateSpeed = TireRotateSpeed * accelRate;
-		cout << TireRotateSpeed<< endl;
-	} else {
-		//TireRotateSpeed = max(0.0f, TireRotateSpeed - 0.2f);
-		accelRate = max(1.0f, accelRate - 0.01f);
+	if(!cruisectrl) {
+		if(accel) {
+			accelRate = min(10.0f, accelRate + 0.1f);
+		} else if (!backaccel && accelRate > 0.0f) {
+			//TireRotateSpeed = max(0.0f, TireRotateSpeed - 0.2f);
+			accelRate = max(0.0f, accelRate - 0.05f);
+		} else if (backaccel) {
+			accelRate = max(-10.0f, accelRate - 0.1f);
+		} else if (!accel && accelRate < 0.0f) {
+			accelRate = min(0.0f, accelRate + 0.05f);
+		}
 	}
+	
+	TireRotateSpeed = TireRotateSpeed + accelRate;
 	
 	glutSwapBuffers();
 	glutPostRedisplay();
