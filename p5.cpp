@@ -43,7 +43,7 @@ void drawCylinder()
 		gluQuadricDrawStyle(nut, GLU_FILL);
 		glColor3f(1, 0, 0);
 		gluCylinder(nut, 1.0, 1.0, 0.3, 6, 2);
-	glEndList();
+	glEndList();df
 	*/
 	gluQuadricDrawStyle(hexNut, GLU_FILL);
 	glColor3f(0.5, 0.5, 0.5);
