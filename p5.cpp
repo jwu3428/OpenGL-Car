@@ -19,6 +19,7 @@ typedef struct RGB {
 
 void arrow_key_callback(int key, int x, int y);
 void kb_callback(unsigned char key, int x, int y);
+void kb_up_callback(unsigned char key, int x, int y);
 
 //GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 //GLfloat shininess[] = { 50.0 };
@@ -31,12 +32,16 @@ GLfloat position[] = { 1.0f, 1.0f, 1.0f, 0.0f };
 
 GLfloat WorldXAngle = 0.0f;
 GLfloat WorldYAngle = 0.0f;
-GLfloat TireRotateAngle = 0.0f;
+GLfloat TireRotateSpeed = 1.0f;
 GLfloat CameraZ = -5.0f;
 
 GLuint hexNut;
 GLuint tire;
 GLuint triangle;
+
+int Time;
+bool accel = false;
+float accelRate = 1.0f;
 
 void reshape(int w, int h)
 {
@@ -58,6 +63,7 @@ void drawHexNut()
 	hexNut = glGenLists(1);
 	glNewList(hexNut, GL_COMPILE);
 		GLUquadricObj *quad = gluNewQuadric();
+		gluQuadricNormals(quad, GLU_SMOOTH);
 		gluQuadricDrawStyle(quad, GLU_FILL);
 		glColor3f(0.5, 0.5, 0.5);
 		gluCylinder(quad, 0.25, 0.25, 0.1, 6, 2);
@@ -84,9 +90,9 @@ void drawTire()
 			GLfloat materialClr[] = {0.5, 0.5, 0.5, 1};
 			GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			GLfloat shininess[] = { 50.0 };
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, materialClr);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpec);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, materialClr);
+			glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpec);
+			glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 			
 			glPushMatrix();
 				glTranslatef(0.0, 0.0, 0.3);
@@ -96,12 +102,12 @@ void drawTire()
 			glPopMatrix();
 		}
 		
-		GLfloat materialClr[] = {1, 0.1, 0.1, 1};
+		GLfloat materialClr[] = {0.1, 0.1, 0.1, 1};
 		GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 		GLfloat shininess[] = { 20.0 };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, materialClr);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpec);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, materialClr);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpec);
+		glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 		
 		glutSolidTorus(1.2, 2.4, 20, 20);
 	glEndList();
@@ -111,9 +117,15 @@ void drawTire()
 void kb_callback(unsigned char key, int x, int y)
 {
 	switch(key) {
-		case 'r':
-			TireRotateAngle += 1.0f;
+		case 'a':
+			cout << "Accelerating..." << endl;
+			accel = true;
 			break;
+		case 'r':
+			TireRotateSpeed += 0.1f;
+			break;
+		case 'R':
+			TireRotateSpeed -= 0.1f;
 		case 'z':
 			CameraZ -= 1.0f;
 			break;
@@ -122,6 +134,17 @@ void kb_callback(unsigned char key, int x, int y)
 			break;
 	}
 	glutPostRedisplay();
+}
+
+void kb_up_callback(unsigned char key, int x, int y)
+{
+	switch(key) {
+		case 'a':
+			cout << "Decelerating..." << endl;
+			accel = false;
+			break;
+	}
+	//glutPostRedisplay();
 }
 
 void arrow_key_callback(int key, int x, int y)
@@ -145,24 +168,26 @@ void arrow_key_callback(int key, int x, int y)
 
 void update()
 {
-	//int time = glutGet(GLUT_ELAPSED_TIME);
-	//int time = TireRotateAngle;
+	//Time = glutGet(GLUT_ELAPSED_TIME);
+	Time = 1;
 	
-	glClearDepth(1.0);
+	//glClearDepth(1.0);
+	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Rotate the image
 	glMatrixMode(GL_MODELVIEW); // Current matrix affects objects positions
 	glLoadIdentity(); // Initialize to the identity
-	glTranslatef(-2, -2, CameraZ-5); // Translate from origin (in front of viewer)
+	glTranslatef(-5.0f, 0.0f, CameraZ-5.0f); // Translate from origin (in front of viewer)
 	glRotatef(WorldXAngle, 0.0, 1.0, 0.0);
 	glRotatef(WorldYAngle, 1.0, 0.0, 0.0);
 
 	glDisable(GL_CULL_FACE);
-	//glPushMatrix();
+	glPushMatrix();
+	glColor3f(1,1,1);
 		for(int i = 0; i < 2; i++) {
 			glPushMatrix();
 				glTranslatef(10.0 * i, 0, 0);
-				glRotatef(TireRotateAngle, 0.0, 0.0, 1.0);
+				glRotatef(TireRotateSpeed, 0.0, 0.0, 1.0);
 				glCallList(tire);
 			glPopMatrix();
 		}
@@ -170,21 +195,30 @@ void update()
 			glPushMatrix();
 				glTranslatef(10.0 * i, 0, -8.0);
 				glRotatef(180.0, 1.0, 0, 0);
-				glRotatef(-TireRotateAngle, 0.0, 0.0, 1.0);
+				glRotatef(-TireRotateSpeed, 0.0, 0.0, 1.0);
 				glCallList(tire);
 			glPopMatrix();
 		}
-	//glPopMatrix();
+	glPopMatrix();
+	
+	if(accel) {
+		accelRate = min(2.0f, accelRate + 0.01f);
+		TireRotateSpeed = TireRotateSpeed * accelRate;
+		cout << TireRotateSpeed<< endl;
+	} else {
+		//TireRotateSpeed = max(0.0f, TireRotateSpeed - 0.2f);
+		accelRate = max(1.0f, accelRate - 0.01f);
+	}
 	
 	glutSwapBuffers();
-	//glutPostRedisplay();
+	glutPostRedisplay();
 }
 
 void init()
 {
 	glClearColor(0,0,0,0);
 	glColor3f(1,1,1);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
@@ -195,9 +229,10 @@ void init()
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	
-	
+	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
 	glutSpecialFunc(arrow_key_callback);
 	glutKeyboardFunc(kb_callback);
+	glutKeyboardUpFunc(kb_up_callback);
 	
 	drawHexNut();
 	drawTire();
@@ -206,7 +241,7 @@ void init()
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("P5");
 	init();
