@@ -38,15 +38,14 @@ void init()
 	
 	GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
-	//glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
+	
 	cout << res << endl;
 }
 
 int main(int argc, char **argv)
 {
-	init();
-	
 	glutInit(&argc, argv);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("P5");
@@ -55,7 +54,7 @@ int main(int argc, char **argv)
 	if(GLEW_OK != err)
 		cout << "glew init error" << endl;
 	
-	//init();
+	init();
 	
 	glutDisplayFunc(update);
 	
