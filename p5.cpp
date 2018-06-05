@@ -17,6 +17,13 @@ typedef struct RGB {
 	RGB(GLfloat _r = 0.0f, GLfloat _g = 0.0f, GLfloat _b = 0.0f) : r(_r), g(_g), b(_b) {}
 } RGB;
 
+GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+GLfloat shininess[] = { 50.0 };
+GLfloat ambientLight[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+GLfloat specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+GLfloat position[] = { 1.0f, 1.0f, 1.0f, 0.0f };
+
 GLUquadricObj *hexNut = gluNewQuadric();
 //gluQuadricNormals(hexNut, GL_TRUE);
 
@@ -35,7 +42,7 @@ void reshape(int w, int h)
 	glLoadIdentity();
 }
 
-void drawCylinder()
+void drawHexNut()
 {
 	/*
 	glNewList(cyl, GL_COMPILE);
@@ -60,9 +67,15 @@ void drawCylinder()
 	glPopMatrix();
 }
 
+void drawTire()
+{
+	
+}
+
 void update()
 {
-	int time = glutGet(GLUT_ELAPSED_TIME);
+	//int time = glutGet(GLUT_ELAPSED_TIME);
+	int time = 1;
 	
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -71,22 +84,30 @@ void update()
 	glLoadIdentity(); // Initialize to the identity
 	glTranslatef(0, 0.0, -5.0); // Translate from origin (in front of viewer)
 	glRotatef(0.0, 0.0, 1.0, 0.0); // Rotate around y-axis
-	glRotatef(0.0, 1.0, 0.0, 0.0); // Set Azimuth angle
+	glRotatef(-20, 1.0, 0.0, 0.0); // Set Azimuth angle
 
 	glDisable(GL_CULL_FACE);
 	glPushMatrix();
 	glRotatef(time * 1.0, 0.0, 0.0, 1.0);
 	glTranslatef(1.5, 0.0, 0.0);
-	drawCylinder();
+	drawHexNut();
 	glPopMatrix();
 	
 	glutSwapBuffers();
-	glutPostRedisplay();
+	//glutPostRedisplay();
 }
 
 void init()
 {
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
+	glLightfv(GL_LIGHT0, GL_POSITION, position);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpec);
+	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 	
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 }
 
 int main(int argc, char **argv)
@@ -95,6 +116,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("P5");
+	init();
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(update);
 	glClearColor(0,0,0,0);
