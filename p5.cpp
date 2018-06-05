@@ -48,6 +48,16 @@ void drawCylinder()
 	gluQuadricDrawStyle(hexNut, GLU_FILL);
 	glColor3f(0.5, 0.5, 0.5);
 	gluCylinder(hexNut, 1.0, 1.0, 0.4, 6, 2);
+	
+	glPushMatrix();
+	glTranslatef(0.0, 0.0, 0.4);
+	gluDisk(hexNut, 0.0, 1.0, 6, 2);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glRotatef(180.0, 1.0, 0, 0);
+	gluDisk(hexNut, 0.0, 1.0, 6, 2);
+	glPopMatrix();
 }
 
 void update()
