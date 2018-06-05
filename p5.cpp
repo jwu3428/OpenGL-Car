@@ -21,14 +21,10 @@ void arrow_key_callback(int key, int x, int y);
 void kb_callback(unsigned char key, int x, int y);
 void kb_up_callback(unsigned char key, int x, int y);
 
-//GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-//GLfloat shininess[] = { 50.0 };
 GLfloat ambientLight[] = { 0.6f, 0.6f, 0.6f, 1.0f };
 GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 GLfloat position[] = { 1.0f, 1.0f, 1.0f, 0.0f };
-
-//gluQuadricNormals(hexNut, GL_TRUE);
 
 GLfloat WorldXAngle = 0.0f;
 GLfloat WorldYAngle = 0.0f;
@@ -64,6 +60,11 @@ void reshape(int w, int h)
 void drawCarFront()
 {
 	carFront = glGenLists(1);
+	glNewList(carFront, GL_COMPILE);
+		glBegin(GL_POLYGON);
+			glVertex3f(0,0,0.3f);
+			glVertex3f(0,0,0.7f);
+	glEndList();
 }
 
 void drawHexNut()
