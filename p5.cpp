@@ -27,7 +27,7 @@ vector<vec3> normals;
 
 void update()
 {
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
 	
 	glutSwapBuffers();
 }
@@ -35,6 +35,12 @@ void update()
 void init()
 {
 	bool res = loadOBJ("DODGE_CHALLENGER_383_MAGNUM/CHALLENGER71.obj", vertices, uvs, normals);
+	
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
+	//glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
+	cout << res << endl;
 }
 
 int main(int argc, char **argv)
@@ -42,6 +48,13 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("P5");
+	
+	GLenum err = glewInit();
+	if(GLEW_OK != err)
+		cout << "glew init error" << endl;
+	
+	//init();
+	
 	glutDisplayFunc(update);
 	
 	glClearColor(0,0,0,0);
