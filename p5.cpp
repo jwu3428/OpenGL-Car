@@ -1,5 +1,3 @@
-#include <GL/glew.h>
-#include <GL/glext.h>
 #include <GL/glut.h>
 #include <GL/freeglut.h>
 #include <cmath>
@@ -8,11 +6,9 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include "objloader.hpp"
 
 #define WINDOW_WIDTH 600
-#define WINDOW_HEIGHT 640
-#define MAX_CTRL_PTS 20
+#define WINDOW_HEIGHT 600
 
 using namespace std;
 
@@ -21,46 +17,80 @@ typedef struct RGB {
 	RGB(GLfloat _r = 0.0f, GLfloat _g = 0.0f, GLfloat _b = 0.0f) : r(_r), g(_g), b(_b) {}
 } RGB;
 
-vector<vec3> vertices;
-vector<vec2> uvs;
-vector<vec3> normals;
+GLUquadricObj *hexNut = gluNewQuadric();
+//gluQuadricNormals(hexNut, GL_TRUE);
+
+void reshape(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 40.0);
+	/* if ( h==0 )
+	gluPerspective ( 80, ( float ) w, 1.0, 5000.0 );
+	else
+	gluPerspective ( 80, ( float ) w / ( float ) h, 1.0, 5000.0 );
+	*/ 
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+void drawCylinder()
+{
+	/*
+	glNewList(cyl, GL_COMPILE);
+		GLUquadric *nut = gluNewQuadric();
+		gluQuadricDrawStyle(nut, GLU_FILL);
+		glColor3f(1, 0, 0);
+		gluCylinder(nut, 1.0, 1.0, 0.3, 6, 2);
+	glEndList();
+	*/
+	gluQuadricDrawStyle(hexNut, GLU_FILL);
+	glColor3f(0.5, 0.5, 0.5);
+	gluCylinder(hexNut, 1.0, 1.0, 0.4, 6, 2);
+}
 
 void update()
 {
-	//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
+	int time = glutGet(GLUT_ELAPSED_TIME);
+	
+	glClearDepth(1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Rotate the image
+	glMatrixMode(GL_MODELVIEW); // Current matrix affects objects positions
+	glLoadIdentity(); // Initialize to the identity
+	glTranslatef(0, 0.0, -5.0); // Translate from origin (in front of viewer)
+	glRotatef(0.0, 0.0, 1.0, 0.0); // Rotate around y-axis
+	glRotatef(0.0, 1.0, 0.0, 0.0); // Set Azimuth angle
+
+	glDisable(GL_CULL_FACE);
+	glPushMatrix();
+	glRotatef(time * 1.0, 0.0, 0.0, 1.0);
+	glTranslatef(1.5, 0.0, 0.0);
+	drawCylinder();
+	glPopMatrix();
 	
 	glutSwapBuffers();
+	glutPostRedisplay();
 }
 
 void init()
 {
-	bool res = loadOBJ("DODGE_CHALLENGER_383_MAGNUM/CHALLENGER71.obj", vertices, uvs, normals);
 	
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	//glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
-	cout << res << endl;
 }
 
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("P5");
-	
-	GLenum err = glewInit();
-	if(GLEW_OK != err)
-		cout << "glew init error" << endl;
-	
-	//init();
-	
+	glutReshapeFunc(reshape);
 	glutDisplayFunc(update);
-	
 	glClearColor(0,0,0,0);
 	glColor3f(1,1,1);
 	glClear(GL_COLOR_BUFFER_BIT);
-	
+	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();
 	
 	return 0;
