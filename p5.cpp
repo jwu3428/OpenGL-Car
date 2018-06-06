@@ -562,16 +562,16 @@ void update()
 		glEnable(GL_TEXTURE_2D);
 			glBegin(GL_POLYGON);
 				glTexCoord2d(0, 0);
-				glVertex3f(-100, -1, -100);
+				glVertex3f(-100, -0.85, -100);
 			
 				glTexCoord2d(0, 1);
-				glVertex3f(-100, -1, 100);
+				glVertex3f(-100, -0.85, 100);
 			
 				glTexCoord2d(1, 1);
-				glVertex3f(100, -1, 100);
+				glVertex3f(100, -0.85, 100);
 			
 				glTexCoord2d(1, 0);
-				glVertex3f(100, -1, -100);
+				glVertex3f(100, -0.85, -100);
 			glEnd();
 		glDisable(GL_TEXTURE_2D);
 	}
