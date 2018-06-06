@@ -13,6 +13,7 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
+#define MAX_SPEED 50.0f
 
 using namespace std;
 
@@ -36,7 +37,7 @@ GLfloat WorldXAngle = 0.0f;
 GLfloat WorldYAngle = 10.0f;
 GLfloat TireRotateSpeed = 1.0f;
 GLfloat TireRotation = 0.0f;
-GLfloat CameraZ = -5.0f;
+GLfloat CameraZ = -5.0f, CameraY = 0.0f;
 GLfloat CarPos[] = {0.0f, 0.0f, 0.0f};
 GLfloat CarRotation = 0.0f;
 
@@ -51,6 +52,7 @@ bool backaccel = false;
 bool cruisectrl = false;
 bool turnRight = false, turnLeft = false;
 bool disableGround = false;
+bool autoDrive = false;
 
 void displayText(const char* str, int x, int y)
 {
@@ -106,7 +108,7 @@ void reshape(int w, int h)
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glFrustum(-1.2, 1.2, -1.0, 1.0, 1.0, 100.0);
+	glFrustum(-float(w)/float(h), float(w)/float(h), -1.0, 1.0, 1.0, 100.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -149,8 +151,8 @@ void drawCarFront()
 		vertex(0,.2f,-.3f),
 		vertex(0,.2f,.3f),
 		
-		vertex(0,0,-.3f),
 		vertex(0,0,.3f),
+		vertex(0,0,-.3f),
 		vertex(0,.2f,.3f),
 		
 		vertex(0,.2f,.3f),
@@ -211,35 +213,35 @@ void drawCarBody()
 		vertex(-1.5f,1.4f,1.4f),
 		vertex(-1.0f,.3f,1.5f),
 		vertex(-1.0f,.3f,1.5f),
-		vertex(-3.0f,.4f,1.5f),
 		vertex(-2.25f,0,1.4f),
+		vertex(-3.0f,.4f,1.5f),
 		vertex(-1.0f,.3f,1.5f),
 		vertex(2.5f,.3f,1.5f),
 		vertex(2.5f,0,1.4f),
 		vertex(2.5f,0,1.4f),
-		vertex(-1.0f,.3f,1.5f),
 		vertex(-2.25f,0,1.4f),
+		vertex(-1.0f,.3f,1.5f),
 		
 		//right
-		vertex(-3.0f,.4f,-1.5f),
+		vertex(-1.0f,.3f,-1.5f),
 		vertex(-1.5f,1.4f,-1.4f),
-		vertex(-1.0f,.3f,-1.5f),
-		vertex(-1.0f,.3f,-1.5f),
+		vertex(-3.0f,.4f,-1.5f),
 		vertex(-3.0f,.4f,-1.5f),
 		vertex(-2.25f,0,-1.4f),
 		vertex(-1.0f,.3f,-1.5f),
 		vertex(2.5f,.3f,-1.5f),
-		vertex(2.5f,0,-1.4f),
+		vertex(-1.0f,.3f,-1.5f),
 		vertex(2.5f,0,-1.4f),
 		vertex(-1.0f,.3f,-1.5f),
 		vertex(-2.25f,0,-1.4f),
+		vertex(2.5f,0,-1.4f),
 		
 		//inside
-		vertex(-1.5f,1.4f,1.4f),
 		vertex(-1.5f,1.4f,-1.4f),
-		vertex(-2.25f,0,-1.4f),
+		vertex(-1.5f,1.4f,1.4f),
 		vertex(-2.25f,0,-1.4f),
 		vertex(-2.25f,0,1.4f),
+		vertex(-2.25f,0,-1.4f),
 		vertex(-1.5f,1.4f,1.4f),
 		
 		//floor
@@ -436,10 +438,12 @@ void kb_callback(unsigned char key, int x, int y)
 	switch(key) {
 		case 'w':
 			cruisectrl = false;
+			autoDrive = false;
 			accel = true;
 			break;
 		case 's':
 			cruisectrl = false;
+			autoDrive = false;
 			backaccel = true;
 			break;
 		case 'a':
@@ -450,6 +454,11 @@ void kb_callback(unsigned char key, int x, int y)
 			break;
 		case 'f':
 			cruisectrl = !cruisectrl;
+			autoDrive = false;
+			break;
+		case 'q':
+			cruisectrl = false;
+			autoDrive = !autoDrive;
 			break;
 		case 'r':
 			CarPos[0] = 0;
@@ -459,12 +468,21 @@ void kb_callback(unsigned char key, int x, int y)
 			WorldXAngle = 0.0f;
 			WorldYAngle = 10.0f;
 			CameraZ = -5.0f;
+			CameraY = 0.0f;
+			cruisectrl = false;
+			autoDrive = false;
 			break;
 		case 'z':
 			CameraZ -= 1.0f;
 			break;
 		case 'x':
 			CameraZ += 1.0f;
+			break;
+		case 'c':
+			CameraY -= 1.0f;
+			break;
+		case 'v':
+			CameraY += 1.0f;
 			break;
 		case ' ':
 			CameraMode++;
@@ -527,14 +545,13 @@ void update()
 	glLoadIdentity();
 	
 	if(CameraMode == 0) {
-		glTranslatef(0.0f, 0.0f, CameraZ-5.0f);
+		glTranslatef(0.0f, CameraY, CameraZ-5.0f);
 		glRotatef(WorldXAngle, 0.0, 1.0, 0.0);
 		glRotatef(WorldYAngle, 1.0, 0.0, 0.0);
 	} else if(CameraMode == 1){
 		glRotatef(-90.0 + WorldXAngle - CarRotation, 0, 1, 0);
 		glTranslatef(-CarPos[0], CarPos[1]-2, -CarPos[2]);
-	} else {
-		glRotatef(0, 0, 1, 0);
+	} else if(CameraMode == 2){
 		glRotatef(10 + WorldYAngle, 1, 0, 0);
 		glTranslatef(-CarPos[0], CarPos[1]-2, -CarPos[2]-7);
 	}
@@ -678,12 +695,12 @@ void update()
 	glPopMatrix();
 	
 	if(!cruisectrl) {
-		if(accel) {
-			accelRate = min(45.0f, accelRate + 0.25f);
+		if(accel || autoDrive) {
+			accelRate = min(MAX_SPEED, accelRate + 0.25f);
 		} else if (!backaccel && accelRate > 0.0f) {
 			accelRate = max(0.0f, accelRate - 0.1f);
 		} else if (backaccel) {
-			accelRate = max(-45.0f, accelRate - 0.25f);
+			accelRate = max(-MAX_SPEED, accelRate - 0.25f);
 		} else if (!accel && accelRate < 0.0f) {
 			accelRate = min(0.0f, accelRate + 0.1f);
 		}
@@ -714,16 +731,23 @@ void update()
 	TireRotateSpeed = TireRotateSpeed + accelRate/2;
 	CarPos[0] -= cos(CarRotation / 180.0 * M_PI) * accelRate/100;
 	CarPos[2] += sin(CarRotation / 180.0 * M_PI) * accelRate/100;
-	if(CarPos[0] > 100 || CarPos[0] < -100) CarPos[0] = 0;
-	if(CarPos[2] > 100 || CarPos[2] < -100) CarPos[2] = 0;
+	if(CarPos[0] > 100 || CarPos[0] < -100) CarPos[0] *= -1;
+	if(CarPos[2] > 100 || CarPos[2] < -100) CarPos[2] *= -1;
 	
 	stringstream ss;
 	ss << "Speed: " << (int) accelRate;
 	if(cruisectrl) ss << " !";
-	displayText(ss.str().c_str(), 10, 580);
+	displayText(ss.str().c_str(), 10, glutGet(GLUT_WINDOW_HEIGHT)-20);
 	ss.str(string());
-	ss << "World Coords: (" << setprecision(4) << CarPos[0] << "," << CarPos[2] << ")";
-	displayText(ss.str().c_str(), 10, 560);
+	ss << "World Coords: (" << fixed << setprecision(1) << CarPos[0] << "," << CarPos[2] << ")";
+	displayText(ss.str().c_str(), 10, glutGet(GLUT_WINDOW_HEIGHT)-40);
+	ss.str(string());
+	resetiosflags(ios::fixed);
+	
+	if(CameraMode == 0 && glutGet(GLUT_WINDOW_WIDTH) > 450) {
+		ss << "Camera Angles: " << setprecision(0) << WorldXAngle << "," << WorldYAngle;
+		displayText(ss.str().c_str(), glutGet(GLUT_WINDOW_WIDTH)-250, glutGet(GLUT_WINDOW_HEIGHT)-20);
+	}
 	
 	glutSwapBuffers();
 	glutPostRedisplay();
