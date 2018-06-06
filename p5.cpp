@@ -41,6 +41,7 @@ GLfloat CarPos[] = {0.0f, 0.0f, 0.0f};
 GLfloat CarRotation = 0.0f;
 
 GLuint hexNut, tire, tireCap, carFront, axle, carBody, carSide, carEngine, carExhaustPipe, steeringWheel;
+GLuint g_texID;
 
 int CameraMode = 0;
 int Time;
@@ -392,7 +393,6 @@ void drawTire()
 	glEndList();
 }
 
-
 void kb_callback(unsigned char key, int x, int y)
 {
 	switch(key) {
@@ -502,6 +502,21 @@ void update()
 	}
 
 	glDisable(GL_CULL_FACE);
+	glEnable(GL_TEXTURE_2D);
+		glBegin(GL_POLYGON);
+			glTexCoord2d(0, 0);
+			glVertex3f(-50, 50, 0);
+			
+			glTexCoord2d(0, 1);
+			glVertex3f(-50, 50, 0);
+			
+			glTexCoord2d(1, 1);
+			glVertex3f(50, 50, 0);
+			
+			glTexCoord2d(1, 0);
+			glVertex3f(x, -y, 0);
+		glEnd();
+	glDisable(GL_TEXTURE_2D);
 	
 	glPushMatrix();
 		glutSolidSphere(0.1, 20, 20);
@@ -680,6 +695,41 @@ void init()
 	drawCarEngine();
 }
 
+Mat cv_readImage(const char *path){
+	Mat image = imread(path, CV_LOAD_IMAGE_COLOR);
+	if(!image.data){
+		cout << "Fail to load image\n";
+		return Mat();
+	}
+	return image.clone();
+}
+
+GLuint setupTexture(unsigned char *image, int width, int height){
+	GLuint tex;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexImage2D(
+		GL_TEXTURE_2D,
+		0,
+		GL_RGB,
+		width,
+		height,
+		0,
+		GL_BGR,
+		GL_UNSIGNED_BYTE,
+		image
+	);
+	// Bind target back to its default.
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return tex;
+}
+
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
@@ -689,6 +739,11 @@ int main(int argc, char **argv)
 	init();
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(update);
+	
+	Mat image = cv_readImage("dry_grass.jpg");
+	g_texID = setupTexture(image.ptr(), image.cols, image.rows);
+	glBindTexture(GL_TEXTURE_2D, g_texID);
+	
 	glutMainLoop();
 	
 	return 0;
