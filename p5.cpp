@@ -515,7 +515,7 @@ void update()
 			glVertex3f(50, -1, 50);
 			
 			glTexCoord2d(1, 0);
-			glVertex3f(50, -1, -0);
+			glVertex3f(50, -1, -50);
 		glEnd();
 	glDisable(GL_TEXTURE_2D);
 	
@@ -624,7 +624,6 @@ void update()
 		glPopMatrix();
 		
 		glPushMatrix();
-			
 		glPopMatrix();
 	glPopMatrix();
 	
@@ -696,11 +695,11 @@ void init()
 	drawCarEngine();
 }
 
-Mat cv_readImage(const char *path){
-	Mat image = imread(path, CV_LOAD_IMAGE_COLOR);
+cv::Mat cv_readImage(const char *path){
+	cv::Mat image = cv::imread(path, CV_LOAD_IMAGE_COLOR);
 	if(!image.data){
 		cout << "Fail to load image\n";
-		return Mat();
+		return cv::Mat();
 	}
 	return image.clone();
 }
@@ -741,7 +740,7 @@ int main(int argc, char **argv)
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(update);
 	
-	Mat image = cv_readImage("dry_grass.jpg");
+	cv::Mat image = cv_readImage("dry_grass.jpg");
 	g_texID = setupTexture(image.ptr(), image.cols, image.rows);
 	glBindTexture(GL_TEXTURE_2D, g_texID);
 	
