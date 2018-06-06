@@ -56,6 +56,10 @@ vertex cross(vertex v1, vertex v2)
 	n.x = v1.y * v2.z - v2.y * v1.z;
 	n.y = v1.z * v2.x - v2.z * v1.x;
 	n.z = v1.x * v2.y - v2.x * v1.y;
+	float mag = sqrt(pow(n.x,2)+pow(n.y,2)+pow(n.z,2));
+	n.x /= mag;
+	n.y /= mag;
+	n.z /= mag;
 	return n;
 }
 
@@ -250,8 +254,18 @@ void drawCarSide()
 {
 	vertex v[] = {
 		vertex(-1.0f,.5f,1.5f),
-		vertex(-1.0f,.2f,1.8f),
-		vertex(2.0f,.5f,1.5f),
+		vertex(-1.2f,0,2.0f),
+		vertex(1.6f,.5f,1.5f),
+		vertex(1.6f,0,2.4f),
+		vertex(1.6f,.5f,1.5f),
+		vertex(-1.2f,0,2.0f),
+		
+		vertex(-1.0f,.5f,-1.5f),
+		vertex(-1.2f,0,-2.0f),
+		vertex(1.6f,.5f,-1.5f),
+		vertex(1.6f,0,-2.4f),
+		vertex(1.6f,.5f,-1.5f),
+		vertex(-1.2f,0,-2.0f),
 	};
 	carSide = glGenLists(1);
 	glNewList(carSide, GL_COMPILE);
@@ -269,7 +283,14 @@ void drawCarSide()
 
 void drawCarEngine()
 {
-	
+	carEngine = glGenLists(1);
+	glNewList(carEngine,GL_COMPILE);
+		glPushMatrix();
+			glTranslatef(2.0,1.0,0);
+			glScalef(0.8, 0.6, 1.0);
+			glutSolidCube(2.0);
+		glPopMatrix();
+	glEndList();
 }
 
 void drawSteeringWheel()
@@ -568,6 +589,27 @@ void update()
 			setMaterial(0.8,0,0,50);
 			glCallList(carBody);
 		glPopMatrix();
+		
+		glPushMatrix();
+			setMaterial(0.8,0.8,0.8,40);
+			glCallList(carSide);
+		glPopMatrix();
+		
+		glPushMatrix();
+			setMaterial(0.4,0.4,0.4,30);
+			glCallList(carEngine);
+		glPopMatrix();
+		
+		glPushMatrix();
+			glScalef(1.2, 0.3, 1.2);
+			glRotatef(90.0, 1.0, 0, 0);
+			glTranslatef(2.1, 0.8, -8.0);
+			glCallList(axle);
+		glPopMatrix();
+		
+		glPushMatrix();
+			glScalef(1.2
+		glPopMatrix();
 	glPopMatrix();
 	
 	if(!cruisectrl) {
@@ -634,6 +676,8 @@ void init()
 	drawCarFront();
 	drawAxle();
 	drawCarBody();
+	drawCarSide();
+	drawCarEngine();
 }
 
 int main(int argc, char **argv)
