@@ -17,30 +17,59 @@ typedef struct RGB {
 	RGB(GLfloat _r = 0.0f, GLfloat _g = 0.0f, GLfloat _b = 0.0f) : r(_r), g(_g), b(_b) {}
 } RGB;
 
+typedef struct vertex {
+	GLfloat x, y, z;
+	vertex(GLfloat _x = 0.0f, GLfloat _y = 0.0f, GLfloat _z = 0.0f) : x(_x), y(_y), z(_z) {}
+} vertex;
+
 void arrow_key_callback(int key, int x, int y);
 void kb_callback(unsigned char key, int x, int y);
 void kb_up_callback(unsigned char key, int x, int y);
+vertex cross(vertex v1, vertex v2);
 
-GLfloat ambientLight[] = { 0.6f, 0.6f, 0.6f, 1.0f };
-GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+GLfloat ambientLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+GLfloat diffuseLight[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 GLfloat specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-GLfloat position[] = { 1.0f, 1.0f, 1.0f, 0.0f };
+GLfloat position[] = { 0.0, 1.0f, 0.0f, 0.0f };
 
 GLfloat WorldXAngle = 0.0f;
 GLfloat WorldYAngle = 0.0f;
 GLfloat TireRotateSpeed = 1.0f;
+GLfloat TireRotation = 0.0f;
 GLfloat CameraZ = -5.0f;
 GLfloat CarPos[] = {0.0f, 0.0f, 0.0f};
 GLfloat CarRotation = 0.0f;
 
-GLuint hexNut, tire, tireCap, carFront, axle;
+GLuint hexNut, tire, tireCap, carFront, axle, carBody, carSide, carEngine, carExhaustPipe, steeringWheel;
 
+int CameraMode = 0;
 int Time;
 bool accel = false;
 float accelRate = 0.0f;
 bool backaccel = false;
 bool cruisectrl = false;
 bool turnRight = false, turnLeft = false;
+
+vertex cross(vertex v1, vertex v2)
+{
+	vertex n, a;
+	n.x = v1.y * v2.z - v2.y * v1.z;
+	n.y = v1.z * v2.x - v2.z * v1.x;
+	n.z = v1.x * v2.y - v2.x * v1.y;
+	return n;
+}
+
+vertex cross(vertex v1, vertex v2, vertex v3)
+{
+	vertex va, vb;
+	va.x = v2.x - v1.x;
+	va.y = v2.y - v1.y;
+	va.z = v2.z - v1.z;
+	vb.x = v3.x - v1.x;
+	vb.y = v3.y - v1.y;
+	vb.z = v3.z - v1.z;
+	return cross(va, vb);
+}
 
 void reshape(int w, int h)
 {
@@ -60,26 +89,192 @@ void reshape(int w, int h)
 void setMaterial(GLfloat r, GLfloat g, GLfloat b, GLfloat shine)
 {
 	GLfloat materialClr[] = {r, g, b, 1};
+	GLfloat materialAmb[] = {r/2, g/2, b/2, 1};
 	GLfloat materialSpec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	GLfloat shininess[] = { shine };
-	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, materialClr);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, materialClr);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmb);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpec);
 	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 }
 
 void drawCarFront()
 {
+	vertex v[] = {
+		vertex(-.2f,0,-.3f),
+		vertex(-0.2f,0,0.3f),
+		vertex(0,0.2f,0.3f),
+		vertex(0,0.2f,0.3f),
+		vertex(0,0.2f,-0.3f),
+		vertex(-0.2f,0,-0.3f),
+		
+		vertex(-.2f,0,.3f),
+		vertex(0,0,.5f),
+		vertex(0,.2f,.3f),
+		
+		vertex(-.2f,0,-.3f),
+		vertex(0,.2f,-.3f),
+		vertex(0,0,-.5f),
+		
+		vertex(0,0,-.5f),
+		vertex(0,.2f,-.3f),
+		vertex(0,0,-.3f),
+		
+		vertex(0,0,-.3f),
+		vertex(0,.2f,-.3f),
+		vertex(0,.2f,.3f),
+		
+		vertex(0,0,-.3f),
+		vertex(0,0,.3f),
+		vertex(0,.2f,.3f),
+		
+		vertex(0,.2f,.3f),
+		vertex(0,0,.5f),
+		vertex(0,0,.3f),
+		
+		vertex(0,0,-.5f),
+		vertex(0,0,-.3f),
+		vertex(-.2f,0,-.3f),
+		
+		vertex(-.2f,0,-.3f),
+		vertex(0,0,-.3f),
+		vertex(0,0,.3f),
+		
+		vertex(0,0,.3f),
+		vertex(-.2f,0,.3f),
+		vertex(-.2f,0,-.3f),
+		
+		vertex(-.2f,0,.3f),
+		vertex(0,0,.3f),
+		vertex(0,0,.5f)
+	};
 	carFront = glGenLists(1);
 	glNewList(carFront, GL_COMPILE);
-		glBegin(GL_POLYGON);
-			glVertex3f(-0.4f,0,-0.2f);
-			glVertex3f(-0.4f,0,0.2f);
-			glVertex3f(0, 0, 0.5f);
-			glVertex3f(0, 0.2f, 0.2f);
-			glVertex3f(0, 0.2f, -0.2f);
-			glVertex3f(0, 0, -0.5f);
+		glBegin(GL_TRIANGLES);
+			for(unsigned int i = 0; i < sizeof(v)/sizeof(v[0]); i += 3) {
+				vertex n = cross(v[i], v[i+1], v[i+2]);
+				glNormal3f(n.x, n.y, n.z);
+				glVertex3f(v[i].x, v[i].y, v[i].z);
+				glVertex3f(v[i+1].x, v[i+1].y, v[i+1].z);
+				glVertex3f(v[i+2].x, v[i+2].y, v[i+2].z);
+			}
 		glEnd();
 	glEndList();
+	glShadeModel(GL_SMOOTH);
+}
+
+void drawCarBody()
+{
+	vertex v[] = {
+		//hood
+		vertex(-3.0f,.4f,-1.5f),
+		vertex(-3.0f,.4f,1.5f),
+		vertex(-1.5f,1.4f,-1.4f),
+		vertex(-1.5f,1.4f,1.4f),
+		vertex(-1.5f,1.4f,-1.4f),
+		vertex(-3.0f,.4f,1.5f),
+		//angledbottom
+		vertex(-3.0f,.4f,-1.5f),
+		vertex(-2.25f,0,-1.5f),
+		vertex(-2.25f,0,1.4f),
+		vertex(-2.25f,0,1.4f),
+		vertex(-3.0f,.4f,1.5f),
+		vertex(-3.0f,.4f,-1.5f),
+		
+		//left
+		vertex(-3.0f,.4f,1.5f),
+		vertex(-1.5f,1.4f,1.4f),
+		vertex(-1.0f,.3f,1.5f),
+		vertex(-1.0f,.3f,1.5f),
+		vertex(-3.0f,.4f,1.5f),
+		vertex(-2.25f,0,1.4f),
+		vertex(-1.0f,.3f,1.5f),
+		vertex(2.5f,.3f,1.5f),
+		vertex(2.5f,0,1.4f),
+		vertex(2.5f,0,1.4f),
+		vertex(-1.0f,.3f,1.5f),
+		vertex(-2.25f,0,1.4f),
+		
+		//right
+		vertex(-3.0f,.4f,-1.5f),
+		vertex(-1.5f,1.4f,-1.4f),
+		vertex(-1.0f,.3f,-1.5f),
+		vertex(-1.0f,.3f,-1.5f),
+		vertex(-3.0f,.4f,-1.5f),
+		vertex(-2.25f,0,-1.4f),
+		vertex(-1.0f,.3f,-1.5f),
+		vertex(2.5f,.3f,-1.5f),
+		vertex(2.5f,0,-1.4f),
+		vertex(2.5f,0,-1.4f),
+		vertex(-1.0f,.3f,-1.5f),
+		vertex(-2.25f,0,-1.4f),
+		
+		//inside
+		vertex(-1.5f,1.4f,1.4f),
+		vertex(-1.5f,1.4f,-1.4f),
+		vertex(-2.25f,0,-1.4f),
+		vertex(-2.25f,0,-1.4f),
+		vertex(-2.25f,0,1.4f),
+		vertex(-1.5f,1.4f,1.4f),
+		
+		//floor
+		vertex(-2.25f,0,-1.4f),
+		vertex(-2.25f,0,1.4f),
+		vertex(2.5f,0,1.4f),
+		vertex(2.5f,0,1.4f),
+		vertex(2.5f,0,-1.4f),
+		vertex(-2.25f,0,-1.4f),
+		
+		vertex(-2.25f,0.15f,-1.4f),
+		vertex(-2.25f,0.15f,1.4f),
+		vertex(2.5f,0.15f,1.4f),
+		vertex(2.5f,0.15f,1.4f),
+		vertex(2.5f,0.15f,-1.4f),
+		vertex(-2.25f,0.15f,-1.4f),
+	};
+	carBody = glGenLists(1);
+	glNewList(carBody, GL_COMPILE);
+		glBegin(GL_TRIANGLES);
+			for(unsigned int i = 0; i < sizeof(v)/sizeof(v[0]); i += 3) {
+				vertex n = cross(v[i], v[i+1], v[i+2]);
+				glNormal3f(n.x, n.y, n.z);
+				glVertex3f(v[i].x, v[i].y, v[i].z);
+				glVertex3f(v[i+1].x, v[i+1].y, v[i+1].z);
+				glVertex3f(v[i+2].x, v[i+2].y, v[i+2].z);
+			}
+		glEnd();
+	glEndList();
+}
+
+void drawCarSide()
+{
+	vertex v[] = {
+		vertex(-1.0f,.5f,1.5f),
+		vertex(-1.0f,.2f,1.8f),
+		vertex(2.0f,.5f,1.5f),
+	};
+	carSide = glGenLists(1);
+	glNewList(carSide, GL_COMPILE);
+		glBegin(GL_TRIANGLES);
+			for(unsigned int i = 0; i < sizeof(v)/sizeof(v[0]); i += 3) {
+				vertex n = cross(v[i], v[i+1], v[i+2]);
+				glNormal3f(n.x, n.y, n.z);
+				glVertex3f(v[i].x, v[i].y, v[i].z);
+				glVertex3f(v[i+1].x, v[i+1].y, v[i+1].z);
+				glVertex3f(v[i+2].x, v[i+2].y, v[i+2].z);
+			}
+		glEnd();
+	glEndList();
+}
+
+void drawCarEngine()
+{
+	
+}
+
+void drawSteeringWheel()
+{
+
 }
 
 void drawAxle()
@@ -120,6 +315,7 @@ void drawTireCap()
 	tireCap = glGenLists(1);
 	glNewList(tireCap, GL_COMPILE);
 		GLUquadricObj *cap = gluNewQuadric();
+		gluQuadricNormals(cap, GLU_SMOOTH);
 		gluQuadricDrawStyle(cap, GLU_FILL);
 		gluCylinder(cap, r, r, h, 20, 10);
 		
@@ -208,6 +404,12 @@ void kb_callback(unsigned char key, int x, int y)
 		case 'x':
 			CameraZ += 1.0f;
 			break;
+		case ' ':
+			CameraMode = !CameraMode;
+			break;
+		case 27:
+			exit(0);
+			break;
 	}
 	glutPostRedisplay();
 }
@@ -262,9 +464,21 @@ void update()
 	// Rotate the image
 	glMatrixMode(GL_MODELVIEW); // Current matrix affects objects positions
 	glLoadIdentity(); // Initialize to the identity
-	glTranslatef(0.0f, 0.0f, CameraZ-5.0f);
+	glTranslatef(4.0f, 0.0f, CameraZ-5.0f);
 	glRotatef(WorldXAngle, 0.0, 1.0, 0.0);
 	glRotatef(WorldYAngle, 1.0, 0.0, 0.0);
+	
+	if(!CameraMode) {
+		gluLookAt(0, 0, 0, 0,0, -1,0,1,0);
+	} else {
+		GLfloat xp, zp, xd, zd, rad = CarRotation / 180.0 * M_PI;
+		GLfloat r = sqrt(pow(CarPos[0]-1.0f,2) + pow(CarPos[2],2));
+		xp = cos(rad) * r;
+		zp = sin(rad) * r;
+		xd = CarPos[0];
+		zd = CarPos[2];
+		gluLookAt(xp, CarPos[1]+2.0f, zp, xd, CarPos[1], zd, 0, 1, 0);
+	}
 
 	glDisable(GL_CULL_FACE);
 	
@@ -273,10 +487,15 @@ void update()
 	glPopMatrix();
 	
 	glPushMatrix();
+		glutSolidCube(0.2);
+	glPopMatrix();
+	
+	glPushMatrix();
 		glTranslatef(CarPos[0]-4.0, CarPos[1], CarPos[2]);
 		glRotatef(CarRotation, 0, 1, 0);
 		glPushMatrix();
 			glTranslatef(-2.5, 0, 2.0);
+			glRotatef(-TireRotation, 0, 1, 0);
 			glRotatef(TireRotateSpeed, 0.0, 0.0, 1.0);
 			glScalef(0.3, 0.3, 0.3);
 			glCallList(tire);
@@ -292,6 +511,7 @@ void update()
 		glPushMatrix();
 			glTranslatef(-2.5, 0, -2.0);
 			glRotatef(180.0, 1.0, 0, 0);
+			glRotatef(TireRotation, 0.0, 1, 0);
 			glRotatef(-TireRotateSpeed, 0.0, 0.0, 1.0);
 			glScalef(0.3, 0.3, 0.3);
 			glCallList(tire);
@@ -322,32 +542,58 @@ void update()
 			glTranslatef(0.0, 0.0, -2.0);
 			glCallList(axle);
 		glPopMatrix();
+		
+		glPushMatrix();
+			glScalef(0.3, 1.0, 1.0);
+			glRotatef(90.0, 0.0, 1.0, 0.0);
+			glTranslatef(1.0, 0.2, -12.0);
+			glCallList(axle);
+		glPopMatrix();
+		
+		glPushMatrix();
+			glScalef(0.3, 1.0, 1.0);
+			glRotatef(90.0, 0.0, 1.0, 0.0);
+			glTranslatef(-1.0, 0.2, -12.0);
+			glCallList(axle);
+		glPopMatrix();
 	
 		glPushMatrix();
-			setMaterial(1,1,1,20);
-			glTranslatef(-4.0, 0.0, 0.0);
+			setMaterial(0.8,0.8,0.8,40);
+			glTranslatef(-3.5, 0.0, 0.0);
 			glScalef(4.0, 4.0, 4.0);
 			glCallList(carFront);
+		glPopMatrix();
+		
+		glPushMatrix();
+			setMaterial(0.8,0,0,50);
+			glCallList(carBody);
 		glPopMatrix();
 	glPopMatrix();
 	
 	if(!cruisectrl) {
 		if(accel) {
-			accelRate = min(10.0f, accelRate + 0.1f);
+			accelRate = min(20.0f, accelRate + 0.1f);
 		} else if (!backaccel && accelRate > 0.0f) {
 			//TireRotateSpeed = max(0.0f, TireRotateSpeed - 0.2f);
 			accelRate = max(0.0f, accelRate - 0.05f);
 		} else if (backaccel) {
-			accelRate = max(-10.0f, accelRate - 0.1f);
+			accelRate = max(-20.0f, accelRate - 0.1f);
 		} else if (!accel && accelRate < 0.0f) {
 			accelRate = min(0.0f, accelRate + 0.05f);
 		}
 	}
 	
 	if(turnRight) {
-		CarRotation -= accelRate/10;
+		CarRotation -= accelRate/20;
+		TireRotation = min(25.0f, TireRotation + 2.0f);
 	} else if(turnLeft) {
-		CarRotation += accelRate/10;
+		CarRotation += accelRate/20;
+		TireRotation = max(-25.0f, TireRotation - 2.0f);
+	} else {
+		if(TireRotation < 0.0f)
+			TireRotation = min(0.0f, TireRotation + 2.0f);
+		else
+			TireRotation = max(0.0f, TireRotation - 2.0f);
 	}
 		
 	
@@ -387,6 +633,7 @@ void init()
 	drawTire();
 	drawCarFront();
 	drawAxle();
+	drawCarBody();
 }
 
 int main(int argc, char **argv)
