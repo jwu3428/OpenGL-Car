@@ -1,5 +1,6 @@
 #include <GL/glut.h>
 #include <GL/freeglut.h>
+#include <opencv2/opencv.hpp>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -505,16 +506,16 @@ void update()
 	glEnable(GL_TEXTURE_2D);
 		glBegin(GL_POLYGON);
 			glTexCoord2d(0, 0);
-			glVertex3f(-50, 50, 0);
+			glVertex3f(-50, -1, -50);
 			
 			glTexCoord2d(0, 1);
-			glVertex3f(-50, 50, 0);
+			glVertex3f(-50, -1, 50);
 			
 			glTexCoord2d(1, 1);
-			glVertex3f(50, 50, 0);
+			glVertex3f(50, -1, 50);
 			
 			glTexCoord2d(1, 0);
-			glVertex3f(x, -y, 0);
+			glVertex3f(50, -1, -0);
 		glEnd();
 	glDisable(GL_TEXTURE_2D);
 	
@@ -623,7 +624,7 @@ void update()
 		glPopMatrix();
 		
 		glPushMatrix();
-			glScalef(1.2
+			
 		glPopMatrix();
 	glPopMatrix();
 	
